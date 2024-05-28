@@ -1,3 +1,4 @@
+import curses
 import pandas as pd
 import requests
 import time
@@ -57,5 +58,42 @@ def scrape_nba_stats(years):
 
     df.to_csv('nba_stats.csv', index=False)
             
-years = [f'{year}-{(year + 1)%100:02}' for year in range(2012, 2014)]
-scrape_nba_stats(years)
+years = [f'{year}-{(year + 1)%100:02}' for year in range(2012, 2024)]
+choices = years
+# scrape_nba_stats(years)
+
+def update_menu(stdscr):
+    stdscr.clear()
+    curses.curs_set(0)
+    stdscr.addstr(0, 0, "Select the year:")
+
+    current_row = 2
+
+    for i, choice in enumerate(choices):
+        if i == current_choice:
+            stdscr.addstr(current_row, 0, f'{i + 1}. {choice}', curses.A_REVERSE)
+        else:
+            stdscr.addstr(current_row, 0, f'{i + 1}. {choice}')
+        current_row += 1
+
+    stdscr.refresh()
+
+def display_menu(stdscr):
+    global current_choice
+    
+    update_menu(stdscr)
+
+    while True:
+        key = stdscr.getch()
+
+        if key == curses.KEY_UP:
+            current_choice = (current_choice - 1) % len(choices)
+        elif key == curses.KEY_DOWN:
+            current_choice = (current_choice + 1) % len(choices)
+        elif key == curses.KEY_ENTER:
+            break
+
+        update_menu(stdscr)
+
+current_choice = 0
+curses.wrapper(display_menu)
