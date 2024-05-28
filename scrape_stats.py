@@ -1,4 +1,6 @@
+import pandas as pd
 import requests
+import time
 
 def get_nba_stats(season, stat_mode='Totals', season_type='Regular Season', stat_category='PTS'):
     base_url = 'https://stats.nba.com/stats/leagueLeaders'
@@ -31,4 +33,29 @@ def get_nba_stats(season, stat_mode='Totals', season_type='Regular Season', stat
 
     return response.json()
 
-print(get_nba_stats('2021-22'))
+def scrape_nba_stats(years):
+    season_types = ['Regular Season', 'Playoffs']
+    
+    df = pd.DataFrame()
+
+    for year in years:
+        for season_type in season_types:
+            r = get_nba_stats(season=year, season_type=season_type)
+
+            temp_df = pd.DataFrame(r['resultSet']['rowSet'], columns=r['resultSet']['headers'])
+            temp_df.insert(0, 'Year', year)
+            temp_df.insert(1, 'Season Type', season_type)
+            
+            df = pd.concat([df, temp_df], axis=0)
+        
+            lag = 5
+            
+            print(f'Finished scraping data for the {year} {season_type}')
+            print(f'Waiting {lag} seconds')
+            
+            time.sleep(lag)
+
+    df.to_csv('nba_stats.csv', index=False)
+            
+years = [f'{year}-{(year + 1)%100:02}' for year in range(2012, 2014)]
+scrape_nba_stats(years)
