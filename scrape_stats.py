@@ -47,14 +47,16 @@ def scrape_nba_stats(years, season_types):
             
             df = pd.concat([df, temp_df], axis=0)
         
-            lag = 5
+            lag = 2
             
             print(f'Finished scraping data for the {year} {season_type}')
             print(f'Waiting {lag} seconds')
             
             time.sleep(lag)
 
-    df.to_csv('nba_stats.csv', index=False)
+    # df.to_csv('nba_stats.csv', index=False)
+
+    return df
 
 def update_menu(stdscr, choices, current_choice):
     stdscr.clear()
@@ -88,22 +90,32 @@ def display_menu(stdscr, choices):
 
         update_menu(stdscr, choices, choice)
 
- 
 def menu(stdscr, years, season_types):
     curses.curs_set(0)
 
     chosen_year = display_menu(stdscr, years)
     chosen_season_type = display_menu(stdscr, season_types)
 
-    print(chosen_year)
-    print(chosen_season_type)
+    return chosen_year, chosen_season_type
+
+def filter_and_sort_data(df, year, season_type, stat_category):
+    filtered_df = df[(df['Year'] == year) & (df['Season Type'] == season_type)]
+
+    sorted_df = filtered_df.sort_values(by=stat_category, ascending=False).head(10)
+
+    return sorted_df
 
 def main():
-    years = [f'{year}-{(year + 1)%100:02}' for year in range(2012, 2024)]
+    years = [f'{year}-{(year + 1)%100:02}' for year in range(2015, 2018)]
     season_types = ['Regular Season', 'Playoffs']
 
-    # scrape_nba_stats(years, season_types)
-    curses.wrapper(menu, years=years, season_types=season_types)
+    df = scrape_nba_stats(years, season_types)
+
+    year, season_type = curses.wrapper(menu, years, season_types)
+
+    sorted_df = filter_and_sort_data(df, year, season_type, 'PTS')
+
+    print(sorted_df)
 
 if __name__ == '__main__':
     main()
