@@ -34,9 +34,7 @@ def get_nba_stats(season, stat_mode='Totals', season_type='Regular Season', stat
 
     return response.json()
 
-def scrape_nba_stats(years):
-    season_types = ['Regular Season', 'Playoffs']
-    
+def scrape_nba_stats(years, season_types):
     df = pd.DataFrame()
 
     for year in years:
@@ -57,15 +55,10 @@ def scrape_nba_stats(years):
             time.sleep(lag)
 
     df.to_csv('nba_stats.csv', index=False)
-            
-years = [f'{year}-{(year + 1)%100:02}' for year in range(2012, 2024)]
-choices = years
-# scrape_nba_stats(years)
 
-def update_menu(stdscr):
+def update_menu(stdscr, choices, current_choice):
     stdscr.clear()
-    curses.curs_set(0)
-    stdscr.addstr(0, 0, "Select the year:")
+    stdscr.addstr(0, 0, "Select a choice:")
 
     current_row = 2
 
@@ -78,22 +71,39 @@ def update_menu(stdscr):
 
     stdscr.refresh()
 
-def display_menu(stdscr):
-    global current_choice
+def display_menu(stdscr, choices):
+    choice = 0
     
-    update_menu(stdscr)
+    update_menu(stdscr, choices, 0)
 
     while True:
         key = stdscr.getch()
 
         if key == curses.KEY_UP:
-            current_choice = (current_choice - 1) % len(choices)
+            choice = (choice - 1) % len(choices)
         elif key == curses.KEY_DOWN:
-            current_choice = (current_choice + 1) % len(choices)
-        elif key == curses.KEY_ENTER:
-            break
+            choice = (choice + 1) % len(choices)
+        elif key == 10: # Enter key
+            return choices[choice]
 
-        update_menu(stdscr)
+        update_menu(stdscr, choices, choice)
 
-current_choice = 0
-curses.wrapper(display_menu)
+ 
+def menu(stdscr, years, season_types):
+    curses.curs_set(0)
+
+    chosen_year = display_menu(stdscr, years)
+    chosen_season_type = display_menu(stdscr, season_types)
+
+    print(chosen_year)
+    print(chosen_season_type)
+
+def main():
+    years = [f'{year}-{(year + 1)%100:02}' for year in range(2012, 2024)]
+    season_types = ['Regular Season', 'Playoffs']
+
+    # scrape_nba_stats(years, season_types)
+    curses.wrapper(menu, years=years, season_types=season_types)
+
+if __name__ == '__main__':
+    main()
